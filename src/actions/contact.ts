@@ -7,7 +7,7 @@ import { actionError } from "@/lib/actions/action-error";
 import type { ActionResult } from "@/lib/actions/action-result";
 import { logger } from "@/lib/logger";
 import { sendContactNotification } from "@/lib/notifications/contact";
-import { contactFormSchema } from "@/lib/schemas/contact";
+import { createContactFormSchema } from "@/lib/schemas/contact";
 
 function getFieldErrors(
 	fieldErrors: Record<string, string[] | undefined>,
@@ -22,7 +22,15 @@ function getFieldErrors(
 export async function submitContact(
 	input: unknown,
 ): Promise<ActionResult<{ id: number; content: string }>> {
-	const result = contactFormSchema.safeParse(input);
+	const t = await getTranslations("ContactForm");
+	const schema = createContactFormSchema({
+		nameMin: t("errorNameMin"),
+		nameMax: t("errorNameMax"),
+		emailInvalid: t("errorEmailInvalid"),
+		messageMin: t("errorMessageMin"),
+		messageMax: t("errorMessageMax"),
+	});
+	const result = schema.safeParse(input);
 
 	if (!result.success) {
 		// Validation failures are expected — not captured by Sentry
@@ -57,7 +65,6 @@ export async function submitContact(
 	} catch (error) {
 		logger.error({ err: error }, "[contact] DB insert failed");
 
-		const t = await getTranslations("ContactForm");
 		return actionError(t("errorGeneric"));
 	}
 }

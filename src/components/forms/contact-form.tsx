@@ -27,7 +27,7 @@ import type { ActionResult } from "@/lib/actions/action-result";
 import {
 	type ContactFormValues,
 	contactFormDefaults,
-	contactFormSchema,
+	createContactFormSchema,
 } from "@/lib/schemas/contact";
 
 type ContactFormProps = {
@@ -46,10 +46,17 @@ function isContactFieldName(field: string): field is FieldPath<ContactFormValues
 
 export function ContactForm({ onSubmit }: ContactFormProps) {
 	const t = useTranslations("ContactForm");
+	const schema = createContactFormSchema({
+		nameMin: t("errorNameMin"),
+		nameMax: t("errorNameMax"),
+		emailInvalid: t("errorEmailInvalid"),
+		messageMin: t("errorMessageMin"),
+		messageMax: t("errorMessageMax"),
+	});
 	const [serverMessage, setServerMessage] = useState<string | null>(null);
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const form = useForm<ContactFormValues>({
-		resolver: zodResolver(contactFormSchema),
+		resolver: zodResolver(schema),
 		defaultValues: contactFormDefaults,
 	});
 

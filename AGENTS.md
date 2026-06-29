@@ -113,8 +113,11 @@ export const routing = defineRouting({
   locales: ["en", "fr"],       // list every locale the project supports
   defaultLocale: "en",         // served at "/" with no prefix
   localePrefix: { mode: "as-needed" },
+  localeDetection: false,      // do not infer locale from Accept-Language header
 });
 ```
+
+`localeDetection: false` is required so that `GET /` always serves the default locale regardless of the visitor's browser language. Without it, headless browsers (Playwright, CI) send `Accept-Language: en-US` and get redirected to the non-default locale — breaking e2e tests and producing inconsistent behaviour in production.
 
 Then add a matching `messages/<locale>.json` for each locale in `locales`. The proxy and `[locale]` layout pick up the change automatically. Remove any locale files that are no longer in the list.
 

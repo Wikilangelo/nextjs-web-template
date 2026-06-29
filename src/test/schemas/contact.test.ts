@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { contactFormSchema } from "@/lib/schemas/contact";
+import { createContactFormSchema } from "@/lib/schemas/contact";
+
+const contactFormSchema = createContactFormSchema();
 
 const validInput = {
 	name: "Ada Lovelace",
