@@ -6,6 +6,10 @@ import { routing } from "./i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 export function proxy(request: NextRequest) {
+	if (request.nextUrl.pathname.startsWith("/debug")) {
+		return NextResponse.next();
+	}
+
 	// In Next.js 16, proxy rewrites re-enter the proxy (unlike Next.js 15).
 	// next-intl sets X-NEXT-INTL-LOCALE on the rewritten request headers.
 	// Without this guard, "/" rewrites to "/it", which then redirects back

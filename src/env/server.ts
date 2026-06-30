@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 const serverEnvSchema = z.object({
+	APP_ENV: z.enum(["development", "staging", "production"]),
+	ENABLE_SENTRY_DEBUG_ROUTE: z
+		.enum(["true", "false"])
+		.default("false")
+		.transform((value) => value === "true"),
 	DATABASE_URL: z.url(),
 	RESEND_API_KEY: z.string().min(1),
 	CONTACT_EMAIL: z.email(),
@@ -13,6 +18,8 @@ const serverEnvSchema = z.object({
 });
 
 const parsedServerEnv = serverEnvSchema.safeParse({
+	APP_ENV: process.env.APP_ENV,
+	ENABLE_SENTRY_DEBUG_ROUTE: process.env.ENABLE_SENTRY_DEBUG_ROUTE,
 	DATABASE_URL: process.env.DATABASE_URL,
 	RESEND_API_KEY: process.env.RESEND_API_KEY,
 	CONTACT_EMAIL: process.env.CONTACT_EMAIL,

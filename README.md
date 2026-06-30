@@ -2,7 +2,7 @@
 
 Base template for customer projects. Built on Next.js 16 with App Router, Drizzle ORM, Neon, and a typed env layer. Ships with a working contact form, i18n (IT/EN), auth, email delivery, error tracking, and structured logging — ready to rename and deploy.
 
-> For architectural decisions, coding conventions, and AI agent instructions, see [AGENTS.md](AGENTS.md).
+> Local coding-agent notes can live in ignored `AGENTS.md` / `ai/` files, but they are not part of the committed template.
 
 ---
 
@@ -66,14 +66,17 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable | Required | Description |
 |---|---|---|
+| `APP_ENV` | Yes | App environment: `development`, `staging`, or `production` |
+| `ENABLE_SENTRY_DEBUG_ROUTE` | No | Enables `/debug/sentry` in staging for temporary Sentry smoke tests. Defaults to `false`; ignored in production |
 | `DATABASE_URL` | Yes | Neon connection string with `?sslmode=require` |
 | `RESEND_API_KEY` | Yes | Resend API key |
 | `CONTACT_EMAIL` | Yes | Address that receives contact form submissions |
 | `CONTACT_FROM_EMAIL` | Yes | Sender address — must match a verified Resend domain |
-| `SENTRY_DSN` | Yes | Sentry DSN (server-side) |
-| `NEXT_PUBLIC_SENTRY_DSN` | Yes | Sentry DSN (client-side, same value) |
+| `SENTRY_DSN` | Yes | Canonical Sentry DSN used by server, edge, and browser initialization |
+| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | No | Required only where `next build` should upload Sentry source maps |
 | `BETTER_AUTH_SECRET` | Yes | Random secret ≥ 32 chars (`openssl rand -hex 32`) |
 | `BETTER_AUTH_URL` | Yes | Full origin URL of the app (e.g. `https://your-domain.com`) |
+| `SITE_URL` | No | Canonical site URL used for metadataBase and sitemap URLs |
 | `LOG_LEVEL` | No | Pino log level — defaults to `info` |
 
 The app fails to boot if any required variable is missing or malformed. This is intentional — see `src/env/server.ts`.
@@ -126,7 +129,7 @@ The deployment target is an OVH VPS running Docker Swarm via Dokploy. The GitHub
 2. `npm run typecheck`
 3. `npm run build`
 
-For infrastructure details, environment variable injection, Cloudflare setup, and Neon branch strategy, see [AGENTS.md § 7 Infrastructure & Deployment](AGENTS.md).
+Configure the same required environment variables in Dokploy for staging and production. Use `APP_ENV=staging` for staging deployments and `APP_ENV=production` for production deployments.
 
 ---
 
@@ -140,3 +143,27 @@ After cloning, the minimum set of changes for a new customer project:
 4. Populate all variables in `.env.local` (and the equivalent in your Dokploy service environment).
 5. Point `CONTACT_EMAIL` and `CONTACT_FROM_EMAIL` to the client's addresses.
 6. Run `npm run db:migrate` against the production Neon branch.
+
+---
+
+## Sentry smoke test
+
+The template includes a temporary debug route:
+
+```text
+/debug/sentry
+```
+
+Behavior:
+
+- `APP_ENV=development`: route is available; Sentry is disabled, so no events should be sent.
+- `APP_ENV=staging`: route is available only with `ENABLE_SENTRY_DEBUG_ROUTE=true`; generated events should arrive in Sentry with `environment=staging`.
+- `APP_ENV=production`: route always returns 404.
+
+Recommended onboarding flow:
+
+1. Configure Dokploy staging with `APP_ENV=staging`, `SENTRY_DSN=...`, and `ENABLE_SENTRY_DEBUG_ROUTE=true`.
+2. Open `/debug/sentry`.
+3. Trigger both client and server errors.
+4. Confirm issues appear in Sentry with `environment=staging`.
+5. Set `ENABLE_SENTRY_DEBUG_ROUTE=false` again.
